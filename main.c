@@ -1,4 +1,4 @@
-#include <gb/gb.h>
+#include <gbdk/platform.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -97,13 +97,21 @@ uint8_t is_it_pocket(void) {
 
 void main(void)
 {
-	uint8_t result = is_it_pocket();
-	switch(result) {
-		case AP_DMG: printf("I AM (PROBS):\n\nANALOGUE POCKET\n(NON-CGB)\n"); break;
-		case AP_CGB: printf("I AM (PROBS):\n\nANALOGUE POCKET\n(CGB)\n"); break;
-		case AP_NO: printf("I AM (PROBS):\n\nNOT ANALOGUE POCKET\n"); break;
+	if (_cpu == CGB_TYPE) {
+		set_default_palette();
+		printf("ANALOGUE POCKET\n"
+               "detection is not\n"
+               "available when\n"
+               "running in CGB mode\n");
 	}
-
+	else {
+		uint8_t result = is_it_pocket();
+		switch(result) {
+			case AP_DMG: printf("I AM (PROBS):\n\nANALOGUE POCKET\n(NON-CGB)\n"); break;
+			case AP_CGB: printf("I AM (PROBS):\n\nANALOGUE POCKET\n(CGB)\n"); break;
+			case AP_NO: printf("I AM (PROBS):\n\nNOT ANALOGUE POCKET\n"); break;
+		}
+	}
 
     // Loop forever
     while(1) {
