@@ -95,20 +95,27 @@ uint8_t is_it_pocket(void) {
 		return AP_NO;
 }
 
+
+#ifdef ANALOGUEPOCKET
+    #define STATF_PPU_MODE_3 0b11000000
+#else
+    #define STATF_PPU_MODE_3 0b00000011  
+#endif
+
 // Call at power up - This MUST NOT run on DMGs
 uint8_t is_it_pocket_gbc(void) {
 	uint8_t result = AP_NO;
 	
-	while(rLY != 141);
-	while(rLY != 142);
-	while((rSTAT & 3) != 3);
+	while(rLY != 141u);
+	while(rLY != 142u);
+	while((rSTAT & STATF_LCD) != STATF_PPU_MODE_3);
 	rLCDC = LCDCF_OFF;
-	rBCPS = 0;
-	rBCPD = 0;
-	uint8_t read_pal = rBCPD;
-	rBCPD = 0xFF;
+	rBCPS = 0u;
+	rBCPD = 0u;
+	volatile uint8_t read_pal = rBCPD;
+	rBCPD = 0xFFu;
 	rLCDC = LCDCF_ON;
-	if(read_pal != 0)
+	if (read_pal != 0u)
 		result = AP_CGB;
 
 	return result;
@@ -118,12 +125,25 @@ void main(void)
 {
 	uint8_t result = AP_NO;
 
-	if (_cpu == CGB_TYPE) {
-		set_default_palette();
-		result = is_it_pocket_gbc();
-	}
-	else
+    #ifndef MEGADUCK
+    // GB/ GBC / .pocket
+
+	    if (_cpu == CGB_TYPE) {
+            printf("(Running on a GBC)\n");
+
+            // Skip cgb only test if running on a CGB but in DMG compat mode via the ROM header
+            if ( *(uint8_t *)0x0143  != 0x00u) {
+       		    set_default_palette();
+    	    	result = is_it_pocket_gbc();
+            }
+	    }
+	    else {
+		    result = is_it_pocket();
+        }
+    #else
+        // Megaduck
 		result = is_it_pocket();
+    #endif
 
 	switch(result) {
 		case AP_DMG: printf("I AM (PROBS):\n\nANALOGUE POCKET\n(NON-CGB)\n"); break;

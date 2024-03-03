@@ -1,7 +1,13 @@
-CC	= ~/git/gbdev/gbdk2020/gbdk-2020-git/build/gbdk/bin/lcc -Wa-l -Wl-m -Wl-j -v -debug
+# If you move this project you can change the directory
+# to match your GBDK root directory (ex: GBDK_HOME = "C:/GBDK/"
+ifndef GBDK_HOME
+GBDK_HOME = ../../../
+endif
 
-# BINS	= sound.gb sound.duck
-BINS	= is_it_analoguepocket.gb is_it_analoguepocket.duck is_it_analoguepocket.pocket is_it_analoguepocket.gbc
+LCC = $(GBDK_HOME)bin/lcc
+
+# .md1 is Megaduck with the extension that AP core wants (normally .duck in GBDK)
+BINS	= is_it_analoguepocket.gb is_it_analoguepocket.md1 is_it_analoguepocket.gbc is_it_analoguepocket_DMG.pocket is_it_analoguepocket_GBC.pocket
 
 all:	$(BINS)
 
@@ -11,19 +17,23 @@ compile.bat: Makefile
 
 # Compile and link single file in one pass
 %.gb: main.c
-	$(CC) -msm83:gb -o $@ $<
+	$(LCC) -msm83:gb -o $@ $<
 
 %.gbc: main.c
-	$(CC) -msm83:gb -Wm-yc -o $@ $<
+	$(LCC) -msm83:gb -Wm-yc -o $@ $<
 
 # Build megaduck version with -m port:plat flag
-%.duck:	main.c
-	$(CC) -msm83:duck -o $@ $<
+%.md1:	main.c
+	$(LCC) -msm83:duck -o $@ $<
 
 # Build analogue pocket version with -m port:plat flag
-%.pocket: main.c
-	$(CC) -msm83:ap -o $@ $<
+is_it_analoguepocket_DMG.pocket: main.c
+	$(LCC) -msm83:ap -o $@ $<
+
+# Build analogue pocket version with -m port:plat flag
+is_it_analoguepocket_GBC.pocket: main.c
+	$(LCC) -msm83:ap -Wm-yc -o $@ $<
 
 clean:
-	rm -f *.o *.lst *.map *.duck *.pocket *.gb *.gbc *~ *.rel *.cdb *.ihx *.lnk *.sym *.asm *.noi
+	rm -f *.o *.lst *.map *.md1 *.duck *.pocket *.gb *.gbc *~ *.rel *.cdb *.ihx *.lnk *.sym *.asm *.noi
  
