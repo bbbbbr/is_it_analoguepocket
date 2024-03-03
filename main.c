@@ -13,8 +13,8 @@ uint8_t wave_ram_save[WAVE_RAM_SIZE];
 //  // Init Channel 3 Wave RAM to known values
 //  // (Match CGB power-on defaults of alternating 00/FF)
 //  for (uint8_t c = 0u; c < 16u; c++) {
-//    WAV_RAM_SAVE[c] = AUD3WAVE[c];
-//    AUD3WAVE[c] = (c & 1u) ? 0x00u : 0xFFu;
+//	WAV_RAM_SAVE[c] = AUD3WAVE[c];
+//	AUD3WAVE[c] = (c & 1u) ? 0x00u : 0xFFu;
 //  }
 //
 
@@ -95,32 +95,51 @@ uint8_t is_it_pocket(void) {
 		return AP_NO;
 }
 
+// Call at power up - This MUST NOT run on DMGs
+uint8_t is_it_pocket_gbc(void) {
+	uint8_t result = AP_NO;
+	
+	while(rLY != 141);
+	while(rLY != 142);
+	while((rSTAT & 3) != 3);
+	rLCDC = LCDCF_OFF;
+	rBCPS = 0;
+	rBCPD = 0;
+	uint8_t read_pal = rBCPD;
+	rBCPD = 0xFF;
+	rLCDC = LCDCF_ON;
+	if(read_pal != 0)
+		result = AP_CGB;
+
+	return result;
+}
+
 void main(void)
 {
+	uint8_t result = AP_NO;
+
 	if (_cpu == CGB_TYPE) {
 		set_default_palette();
-		printf("ANALOGUE POCKET\n"
-               "detection is not\n"
-               "available when\n"
-               "running in CGB mode\n");
+		result = is_it_pocket_gbc();
 	}
-	else {
-		uint8_t result = is_it_pocket();
-		switch(result) {
-			case AP_DMG: printf("I AM (PROBS):\n\nANALOGUE POCKET\n(NON-CGB)\n"); break;
-			case AP_CGB: printf("I AM (PROBS):\n\nANALOGUE POCKET\n(CGB)\n"); break;
-			case AP_NO: printf("I AM (PROBS):\n\nNOT ANALOGUE POCKET\n"); break;
-		}
+	else
+		result = is_it_pocket();
+
+	switch(result) {
+		case AP_DMG: printf("I AM (PROBS):\n\nANALOGUE POCKET\n(NON-CGB)\n"); break;
+		case AP_CGB: printf("I AM (PROBS):\n\nANALOGUE POCKET\n(CGB)\n"); break;
+		case AP_NO:
+		default: printf("I AM (PROBS):\n\nNOT ANALOGUE POCKET\n"); break;
 	}
 
-    // Loop forever
-    while(1) {
+	// Loop forever
+	while(1) {
 
 
 		// Game main loop processing goes here
 
 
 		// Done processing, yield CPU and wait for start of next frame
-        wait_vbl_done();
-    }
+		wait_vbl_done();
+	}
 }
